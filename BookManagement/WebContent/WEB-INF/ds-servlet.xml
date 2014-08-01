@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+	<!-- Configuring Interceptor start -->
+	<bean id="myInterceptor" class="com.myapp.spring.webmvc.handlerinterceptor.MyHandlerInterceptor"/>
+	
+	<!-- Configuring Custom Handler Adapter start -->
+	
+	<!--  
+	<bean class="com.myapp.spring.webmvc.handleradapter.MyHandlerAdapter"/>
+	-->
+	
+	<!-- Configuring Exception Resolver start -->
+	<bean id="handlerExceptionResolver" class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="exceptionMappings">
+			<props>
+				<prop key="org.springframework.dao.EmptyResultDataAccessException">/SQLError.html</prop>
+				<prop key="org.springframework.web.HttpRequestMethodNotSupportedException">/MyError.html</prop>
+				<prop key="com.myapp.spring.webmvc.handlerexceptionresolver.MyException">/MyError.html</prop>
+				<prop key="com.springframework.dao.DAOException">dbErrorView</prop>
+				<prop key="java.lang.NumberFormatException">notANumber</prop>
+			</props>
+		</property>
+	</bean>
+	<!-- Configuring Exception Resolver end -->
+	
+	<!-- controllerClassNameHandlerMapping start -->
+	<bean id="controllerClassNameHandlerMapping" class="org.springframework.web.servlet.mvc.support.ControllerClassNameHandlerMapping">
+		<property name="order">
+			<value type="int">0</value>
+		</property>
+	</bean>
+	<!-- below controller should be like this for ControllerClassNameHandlerMapping 
+	
+	<bean class="com.myapp.spring.webmvc.AddDepartmentController">
+	-->
+	<!-- controllerClassNameHandlerMapping end -->
+	
+	<!-- beanNmaeUrlHandlerMapping start -->
+	<bean id="beanNmaeUrlHandlerMapping" class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping">
+		<property name="order">
+			<value type="int">1</value>
+		</property>
+		<!-- Configure your interceptor with handler mapping so that before your handler interceptor will execute .
+		you can configure any number of intercptors here -->
+		<property name="interceptors">
+			<list>
+				<ref local="myInterceptor"/>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="addBookModel" class="com.myapp.spring.webmvc.model.AddBookModel">
+		<property name="jdbcTemplate">
+			<ref bean="jdbcTemplate"/>
+		</property>
+	</bean>
+	
+	<bean name="/addBook.spring" class="com.myapp.spring.webmvc.AddBookController">
+		<property name="addBookModel"><ref local="addBookModel"/></property>
+		<property name="commandClass">
+			<value type="java.lang.Class">
+				com.myapp.spring.webmvc.bean.BookDetails
+			</value>
+		</property>
+		<property name="commandName">
+			<value>BookDetails</value>
+		</property>
+		<property name="validator">
+			<bean class="com.myapp.spring.webmvc.validator.BookValidator"/>
+		</property>
+		<property name="bindOnNewForm" value="true"/>
+		<property name="sessionForm" value="false"/>
+		<property name="formView"><value>/AddBookDetails.jsp</value></property>
+		<property name="successView"><value>/AddBookDetailsSuccess.html</value></property>
+	</bean>
+	
+	
+	<bean id="addUserModel" class="com.myapp.spring.webmvc.model.AddUserModel">
+		<property name="jdbcTemplate">
+			<ref bean="jdbcTemplate"/>
+		</property>
+	</bean>
+	<bean name="/addUser.spring" class="com.myapp.spring.webmvc.AddUserController">
+		<property name="addUserModel">
+			<ref local="addUserModel"/>
+		</property>
+		<property name="commandClass">
+			<value type="java.lang.Class">
+				com.myapp.spring.webmvc.bean.UserDetails
+			</value>
+		</property>
+		<property name="commandName">
+			<value>UserDetails</value>
+		</property>
+		<property name="validator">
+			<bean class="com.myapp.spring.webmvc.validator.UserValidator"/>
+		</property>
+	</bean>
+	<bean name="/registration.spring" class="com.myapp.spring.webmvc.RegistrationController">
+		<property name="addUserModel" ref="addUserModel"/>
+		<property name="commandClass"><value type="java.lang.Class">com.myapp.spring.webmvc.bean.UserDetails</value></property>
+		<property name="commandName"><value>UserDetails</value></property>
+		<property name="sessionForm" value="true"/>
+		<property name="pages">
+			<list>
+				<value>/RegistrationStep1.html</value>
+				<value>/RegistrationStep2.html</value>
+				<value>/RegistrationFinal.html</value>
+			</list>
+		</property>
+		<property name="allowDirtyForward" value="false"></property>
+	</bean>
+	<bean name="/removeUser.spring" class="com.myapp.spring.webmvc.RemoveUserController">
+	
+	</bean>
+	<!-- beanNmaeUrlHandlerMapping end -->
+	
+	<!-- SimpleUrlHandlerMapping start -->
+
+	<bean id="myUrlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+		<!--  
+		<property name="mappings">
+			<props>
+				<prop key="/login.spring">loginController</prop>
+				<prop key="/searchUser.spring">searchUserController</prop>
+			</props>
+		</property>
+		-->
+		<!-- another way to declare property as Map Collection -->
+		<property name="urlMap">
+			<map>
+				<entry key="/login.spring">
+					<ref local="loginController"/>
+				</entry>
+				<entry key="/searchUser.spring">
+					<ref local="searchUserController"/>
+				</entry>
+			</map>
+		</property>
+		<property name="order">
+			<value type="int">2</value>
+		</property>
+	</bean>
+	<bean id="loginModel" class="com.myapp.spring.webmvc.model.LoginModel">
+		<constructor-arg>
+			<ref bean="jdbcTemplate"/>
+		</constructor-arg>
+	</bean>
+	<bean id="loginController" class="com.myapp.spring.webmvc.LoginController">
+		<property name="loginModel">
+			<ref local="loginModel"/>
+		</property>
+	</bean>
+	<bean id="searchUserController" class="com.myapp.spring.webmvc.SearchUserController">
+	
+	</bean>
+	<!-- SimpleUrlHandlerMapping end -->
+	
+	<!-- CommonsPathMapHandlerMapping Start . In this class have some meta data information about the path-->
+	<bean id="removeBook" class="com.myapp.spring.webmvc.RemoveBookController"/>
+	<!-- CommonsPathMapHandlerMapping End -->
+	
+	<!-- MultiActionController Example Start -->
+	<bean id="userSearchController" class="com.myapp.spring.webmvc.UserSearchController">
+		<property name="methodNameResolver" ref="myMethodResolver1"/>
+		<property name="searchUserModel" ref="searchUserModel"></property>
+	</bean>
+	<bean id="myMethodResolver1" class="org.springframework.web.servlet.mvc.multiaction.ParameterMethodNameResolver">
+		<property name="paramName" value="searchBy"/>
+		<property name="defaultMethodName" value="invalidRequest"/>
+	</bean>
+	<bean id="myMethodResolver2" class="org.springframework.web.servlet.mvc.multiaction.PropertiesMethodNameResolver">
+		<property name="mappings">
+			<props>
+				<prop key="/searchByUserNumber.spring">searchByUserNumber</prop>
+				<prop key="/searchByUserName.spring">searchByUserName</prop>
+			</props>
+		</property>
+	</bean>
+	<!-- MultiActionController Example end -->
+	
+	<!-- Configuring multiple ViewResolver start-->
+	<bean class="org.springframework.web.servlet.view.XmlViewResolver">
+		<property name="location" value="/WEB-INF/views/MyViews.xml"/>
+		<property name="order" value="0"></property>
+	</bean>
+	
+	<bean class="org.springframework.web.servlet.view.BeanNameViewResolver">
+		<property name="order" value="1"/>
+	</bean>
+	<!-- Configuring view required to render the view for /searchBy.spring start-->
+	<bean name="successSingleUser" class="org.springframework.web.servlet.view.JstlView">
+		<property name="url" value="/WEB-INF/UserDetails.jsp"></property>
+	</bean>
+	<bean name="successMultipleUser" class="org.springframework.web.servlet.view.JstlView">
+		<property name="url" value="/WEB-INF/UserList.jsp"></property>
+	</bean>
+	<!-- Configuring view required to render the view for /searchBy.spring end-->	
+	
+	<!-- Configuring multiple ViewResolver start-->
+	
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/"/>
+		<property name="suffix" value=".jsp"/>
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+		<property name="order" value="2"/>
+	</bean>
+	
+	<!-- Configuring multiple ViewResolver end-->
+	
+	<!-- RowMapper start -->
+	<bean id="userRowMapper" class="com.myapp.spring.webmvc.model.UserRowMapper"/>
+	<!-- RowMapper end -->
+	
+	<bean id="searchUserModel" class="com.myapp.spring.webmvc.model.SearchUserModel">
+		<property name="jdbcTemplate" ref="jdbcTemplate"/>
+		<property name="userRowMapper" ref="userRowMapper"/>
+	</bean>
+	<!-- Configuring message resource for application context -->
+	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basename" value="ApplicationResource"></property>
+	</bean>
+</beans>
